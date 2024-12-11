@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Secret Research Projects</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to right, #ffffff, #000000);
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        h1, h2 {
+            color: white;
+        }
+        .upload-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 1.5s ease-in-out;
+            text-align: center;
+        }
+        .custom-file-button {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            background-color: #ffffff;
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #ffffff;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .custom-file-button:hover {
+            background-color: #f0f0f0;
+            color: #333;
+            transform: scale(1.02);
+        }
+        .btn-upload {
+            background-color: white;
+            color: black;
+            border: 2px solid #ffffff;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            padding: 0.5rem 2rem;
+        }
+        .btn-upload:hover {
+            background-color: #f0f0f0;
+            color: #333;
+            transform: scale(1.02);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .uploaded-files {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Barra de navegación con botón de Cerrar sesión -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Top Secret Research</a>
+        <div class="collapse navbar-collapse justify-content-end">
+            <a href="/logout" class="btn btn-outline-light">Cerrar sesión</a>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="col-md-6">
+            <div class="upload-card p-4">
+                <h1 class="animate__animated animate__fadeInDown mb-4">Upload a File</h1>
+                <form action="/upload" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <button type="button" class="custom-file-button animate__animated animate__fadeIn" onclick="document.getElementById('file-upload').click()">Select a File</button>
+                        <input type="file" id="file-upload" name="file" class="custom-file-input" required onchange="document.querySelector('.custom-file-button').textContent = this.files[0].name">
+                    </div>
+                    <button type="submit" class="btn btn-upload btn-lg animate__animated animate__fadeInUp">Upload File</button>
+                </form>
+            </div>
+            <div class="uploaded-files mt-5">
+                <h2 class="text-center animate__animated animate__fadeIn mt-4">Uploaded Files:</h2>
+                <ul class="list-group mt-3">
+                    {% for file in files %}
+                        <li class="list-group-item text-center animate__animated animate__fadeInUp">
+                            <a href="{{ url_for('download_file', filename=file) }}">{{ file }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
