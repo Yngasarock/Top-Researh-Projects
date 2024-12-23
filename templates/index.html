@@ -1,76 +1,41 @@
-<!doctype html>
-<html lang="es">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Top Secret Research Projects</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <style>
-        body {
-            background: linear-gradient(to right, #ffffff, #000000);
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-        h1, h2 {
-            color: white;
-        }
-        .upload-card {
-            background-color: rgba(255, 255, 255, 0.1);
-            border: none;
-            border-radius: 15px;
-            padding: 2rem;
-            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
-            animation: fadeIn 1.5s ease-in-out;
-            text-align: center;
-        }
         .custom-file-button {
             display: inline-block;
-            padding: 0.5rem 1.5rem;
-            border-radius: 25px;
-            background-color: #ffffff;
-            color: #333;
-            font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid #ffffff;
-            text-align: center;
-            margin-bottom: 1rem;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
         }
-        .custom-file-button:hover {
-            background-color: #f0f0f0;
-            color: #333;
-            transform: scale(1.02);
+        .custom-file-input {
+            display: none;
         }
         .btn-upload {
-            background-color: white;
-            color: black;
-            border: 2px solid #ffffff;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            padding: 0.5rem 2rem;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
         }
-        .btn-upload:hover {
-            background-color: #f0f0f0;
-            color: #333;
-            transform: scale(1.02);
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .uploaded-files {
-            background-color: rgba(0, 0, 0, 0.1);
-            border-radius: 15px;
-            padding: 1rem;
-            margin-top: 2rem;
+        .upload-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
 <body>
-    <!-- Barra de navegación con botón de Cerrar sesión -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">Top Secret Research</a>
+        <a class="navbar-brand" href="#">Dashboard</a>
         <div class="collapse navbar-collapse justify-content-end">
             <a href="/logout" class="btn btn-outline-light">Cerrar sesión</a>
         </div>
@@ -85,6 +50,10 @@
                     <div class="form-group">
                         <button type="button" class="custom-file-button animate__animated animate__fadeIn" onclick="document.getElementById('file-upload').click()">Select a File</button>
                         <input type="file" id="file-upload" name="file" class="custom-file-input" required onchange="document.querySelector('.custom-file-button').textContent = this.files[0].name">
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="custom-file-button animate__animated animate__fadeIn" onclick="document.getElementById('private-key-upload').click()">Select Private Key File</button>
+                        <input type="file" id="private-key-upload" name="private_key" class="custom-file-input" required onchange="document.querySelectorAll('.custom-file-button')[1].textContent = this.files[0].name">
                     </div>
                     <button type="submit" class="btn btn-upload btn-lg animate__animated animate__fadeInUp">Upload File</button>
                 </form>

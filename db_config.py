@@ -5,10 +5,10 @@
 import mysql.connector
 
 # MySQL configuration.
-MYSQL_HOST = 'localhost'
-MYSQL_USER = 'root'
-MYSQL_PASSWORD = 'S3rver01_NGRN'
-MYSQL_DATABASE = 'users'
+MYSQL_HOST = ''
+MYSQL_USER = ''
+MYSQL_PASSWORD = ''
+MYSQL_DATABASE = ''
 
 # Function to get a database connection.
 def get_db_connection():
@@ -26,34 +26,25 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(100) NOT NULL,
+            username VARCHAR(100) NOT NULL UNIQUE,
             password VARCHAR(100) NOT NULL,
             public_key VARCHAR(2000) NOT NULL,
-            private_key VARCHAR(2000) NOT NULL
+            team_name VARCHAR(100) NOT NULL
         );
     ''')
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS files (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            user_id INT NOT NULL,
+            username VARCHAR(100) NOT NULL,
             filename TEXT NOT NULL,
             signature TEXT NOT NULL,
             aes_key TEXT NOT NULL,
             upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
+            FOREIGN KEY (username) REFERENCES users(username)
         );
     ''')
     conn.commit()
     conn.close()
-
-# Function to get the private key from the database.
-def get_private_key_from_db(username):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT private_key FROM users WHERE username = %s", (username,))
-    private_key = cursor.fetchone()[0]
-    conn.close()
-    return private_key
 
 # Function to get the public key from the database.
 def get_public_key_from_db(user_id):
@@ -66,18 +57,18 @@ def get_public_key_from_db(user_id):
     return public_key
 
 # Function to save a file in the database.
-def save_files_in_db(user_id, filename, signature, aes_key):
+def save_files_in_db(username, filename, signature, aes_key):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO files (user_id, filename, signature, aes_key) VALUES (%s, %s, %s, %s)", (user_id, filename, signature, aes_key))
+    cursor.execute("INSERT INTO files (username, filename, signature, aes_key) VALUES (%s, %s, %s, %s)", (username, filename, signature, aes_key))
     conn.commit()
     conn.close()
 
 # Function to save a user in the database.
-def save_user_in_db(username, password, public_key, private_key):
+def save_user_in_db(username, password, public_key, team_name):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO users (username, password, public_key, private_key) VALUES (%s, %s, %s, %s)", (username, password, public_key, private_key))
+    cursor.execute("INSERT INTO users (username, password, public_key, team_name) VALUES (%s, %s, %s, %s)", (username, password, public_key, team_name))
     conn.commit()
     conn.close()
     
@@ -98,12 +89,3 @@ def get_user_from_db(username):
     user = cursor.fetchone()
     conn.close()
     return user
-
-# Function to get the user id from the database.
-def get_user_id_from_db(username):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
-    user_id = cursor.fetchone()[0]
-    conn.close()
-    return user_id

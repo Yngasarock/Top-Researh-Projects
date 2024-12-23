@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <h2 class="mt-5">Register</h2>
-        <form method="POST" action="/register">
+        <form method="POST" action="/register" onsubmit="setTimeout(function(){ window.location.href='/login'; }, 1000);">
             <div class="mb-3">
                 <label for="username" class="form-label">Username</label>
                 <input type="text" class="form-control" id="username" name="username" required>
@@ -17,6 +17,17 @@
             <div class="mb-3">
                 <label for="password" class="form-label">Password</label>
                 <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="mb-3">
+                <label for="team" class="form-label">Team</label>
+                <select class="form-select" id="team" name="team" required>
+                    <option value="" disabled selected>-- Select an option --</option>
+                    <option value="chemistry">Chemistry</option>
+                    <option value="physics">Physics</option>
+                    <option value="biology">Biology</option>
+                    <option value="medicine">Medicine</option>
+                    <option value="cryptography">Cryptography</option>
+                </select>
             </div>
             <button type="submit" class="btn btn-primary">Register</button>
         </form>

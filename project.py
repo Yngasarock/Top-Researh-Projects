@@ -2,7 +2,7 @@
 # Author: Asael, Josue
 
 # Libraries.
-from flask import Flask, request, redirect, session, url_for, render_template, send_file, flash
+from flask import Flask, make_response, request, redirect, session, url_for, render_template, send_file, flash
 import os, base64, hashlib
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
@@ -101,15 +101,21 @@ def generate_key_pair():
     return private_key_b64, public_key_b64
 
 # Function to sign a file.
-def sign_file(file_path, private_key_b64):
+def sign_file(file_path, private_key):
     # Decode the private key.
-    private_key_pem = base64.b64decode(private_key_b64)
-    private_key = ECC.import_key(private_key_pem)
+    #private_key_pem = base64.b64decode(private_key_b64)
+    #private_key = ECC.import_key(private_key_pem)
+    if hasattr(private_key, 'read'):
+        private_key = private_key.read()
+
+    private_key = ECC.import_key(private_key)
+    #print(f'Private key: {private_key}')
     signer = DSS.new(private_key, 'fips-186-3')
 
     with open (file_path, 'rb') as f:
         file_data = f.read()
-
+    #print(f'File data: {file_data}')
+    
     # Hash the file data.
     h = SHA256.new(file_data)
 
@@ -195,6 +201,7 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        team = request.form['team']
         # Hash the password for storage.
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
@@ -209,11 +216,22 @@ def register():
             return redirect(url_for('register'))
 
         # Insert new user.
-        db_config.save_user_in_db(username, hashed_password, public_key, private_key)
+        db_config.save_user_in_db(username, hashed_password, public_key, team)
 
-        flash('User registered successfully. Log in to continue.')
-        return redirect(url_for('login'))
+        
+        # Decode the private key in base64.
+        private_key = base64.b64decode(private_key)
+        #print(f'Private key: {private_key}')
 
+        # Create a BytesIO object for the private key.
+        private_key_io = BytesIO(private_key)
+        private_key_io.seek(0)
+
+        # Send the private key file to the user.
+        return send_file(private_key_io, as_attachment=True, download_name=f'{username}_private_key.pem')
+
+    # Render the registration page.
+    
     return render_template('register.html')
 
 # Route for login.
@@ -275,34 +293,53 @@ def logout():
 def index():
     if 'username' not in session:
         return redirect(url_for('register'))
-    files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if f.endswith('.sig')]
+    username = session['username']
+    user = db_config.get_user_from_db(username)
+    team = user[4]
+    print(f'User: {user}, Team: {team}')
+    # Directory for the team's files.
+    team_folder = os.path.join(app.config['UPLOAD_FOLDER'], team)
+    if not os.path.exists(team_folder):
+        os.makedirs(team_folder)
+
+    # List files in the team's directory.
+    files = [f for f in os.listdir(team_folder) if f.endswith('.sig')]
     return render_template('index.html', files=files)
 
 # Upload route.
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    if 'file' not in request.files:
+    if 'file' not in request.files or 'private_key' not in request.files:
         return redirect(url_for('index'))
     
     file = request.files['file']
-    if file.filename == '':
+    private_key = request.files['private_key']
+    if file.filename == '' or private_key.filename == '':
         return redirect(url_for('index'))
     
     if file:
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        file.save(file_path)
-
-        # Get the username and ID from the database.
+        # Get the username.
         username = session.get('username')
         if not username:
             flash('User not authenticated.')
             return redirect(url_for('login'))
         
-        user_id = db_config.get_user_id_from_db(username)
-        print(f'User ID: {user_id}, Username: {username}')
+        user = db_config.get_user_from_db(username)
+        team = user[4]
+        print(f'User: {user}, Team: {team}')
+
+        # Directory for the team's files.
+        team_folder = os.path.join(app.config['UPLOAD_FOLDER'], team)
+        if not os.path.exists(team_folder):
+            os.makedirs(team_folder)
+
+        # Save the file in the team's directory.
+        file_path = os.path.join(team_folder, file.filename)
+        print(f'File saved at: {file_path}')
+        file.save(file_path)
 
         # Sign the file.
-        signature = sign_file(file_path, db_config.get_private_key_from_db(username))
+        signature = sign_file(file_path, private_key)
         # Encode signature in base64.
         signature_b64 = base64.b64encode(signature)
         print(f'File signature: {signature_b64}')
@@ -324,15 +361,17 @@ def upload_file():
             # Filename with .sig extension.
             filename_sig = f'{file.filename}.sig'
             # Save the concatenated file.
-            concatenated_file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename_sig)
+            concatenated_file_path = os.path.join(team_folder, filename_sig)
             with open(concatenated_file_path, 'wb') as f:
                 f.write(concatenated_file)
 
         # Remove the encrypted file.
         os.remove(encrypted_file_path)
-
+        
+        user = user[1]
+        print(f'User: {user}')
         # Save the files in the database.
-        db_config.save_files_in_db(user_id, filename_sig, signature_b64, key_b64)
+        db_config.save_files_in_db(user, filename_sig, signature_b64, key_b64)
         
         flash(f'File {file.filename} uploaded, signed and encrypted successfully')
         return redirect(url_for('index'))
