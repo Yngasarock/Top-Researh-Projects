@@ -55,11 +55,9 @@ def encrypt_file_CTR(file_path):
     
     # Encode the encrypted data in base64.
     encrypted_data_b64 = base64.b64encode(iv + encrypted_data)
-    #print(f'Encrypted data (base64): {encrypted_data_b64}')
 
     # Encode the key in base64.
     key_b64 = base64.b64encode(key)
-    #print(f'Key (base64): {key_b64}')
 
     encrypted_file_path = file_path + '.enc'
     with open(encrypted_file_path, 'wb') as f:
@@ -107,15 +105,13 @@ def sign_file(file_path, private_key):
     #private_key = ECC.import_key(private_key_pem)
     if hasattr(private_key, 'read'):
         private_key = private_key.read()
-
     private_key = ECC.import_key(private_key)
-    #print(f'Private key: {private_key}')
+    
     signer = DSS.new(private_key, 'fips-186-3')
 
     with open (file_path, 'rb') as f:
         file_data = f.read()
-    #print(f'File data: {file_data}')
-    
+
     # Hash the file data.
     h = SHA256.new(file_data)
 
@@ -147,22 +143,37 @@ def verify_signature(file_data, signature, public_key_b64):
 # -------------------------------------------------------------------------------------------------- #
 # Shamir secret sharing.
 
+# Dictionary to store master keys by team.
+master_keys_by_team = {}
+
 # Function to generate a secret key.
 def generate_secret_key():
     # Generate a random key.
     secret_key = get_random_bytes(16)
+    print(f'Secret key: {secret_key}')
+    # Encode secret key in base64.
+    secret_key = base64.b64encode(secret_key).decode()
+    print(f'Secret key in base64: {secret_key}')
     return secret_key
 
 # Function to split a secret key into shares.
 def split_secret_key(secret_key, n, k):
+    # Decode secret key in base64.
+    secret_key = base64.b64decode(secret_key)
     # Split the secret key into shares.
     shares = Shamir.split(k, n, secret_key)
-    return shares
+    # Encode shares in base64.
+    shares_b64 = [(x, base64.b64encode(y).decode()) for x, y in shares]
+    return shares_b64
 
 # Function to reconstruct a secret key from shares.
 def reconstruct_secret_key(shares):
+    # Decode shares in base64.
+    shares = [(x, base64.b64decode(y)) for x, y in shares]
     # Reconstruct the secret key.
     secret_key = Shamir.combine(shares)
+    # Encode secret key in base64.
+    secret_key = base64.b64encode(secret_key).decode()
     return secret_key
 
 # Fucntion to assign shares to users.
@@ -170,26 +181,29 @@ def assign_master_key_shares_in_memory(master_key):
     global users_shares
     user_shares.clear()
 
-    # Get the number of active users.
-    num_active_users = len(active_users)
-    print(f'Number of active users: {num_active_users}')
-    
-    n = num_active_users  # Number of active users.
-    print(f'Number of shares: {n}')
-    k = n # Minimum number of shares required to reconstruct the master key.
-    print(f'Number of shares required: {k}')
-    # Split the master key into shares.
-    shares = split_secret_key(master_key, n, k)
-    print(f'Shares: {shares}')
+    for team, users in active_users_by_team.items():
+        num_active_users = len(users)
+        print(f'Number of active users in team {team}: {num_active_users}')
 
-    # Assign shares to users.
-    for i, username in enumerate(active_users):
-        user_shares[username] = shares[i]
-        print(f'Share for user {username}: {shares[i]}')
+        if num_active_users > 0:
+            # Generate a master key for each team if it doesn't exist.
+            if team not in master_keys_by_team:
+                master_keys_by_team[team] = master_key
+            master_key = master_keys_by_team[team]
+            print(f'Master key for team {team}: {master_key}')
+
+            # Generate shares for the master key.
+            shares = split_secret_key(master_key, num_active_users, num_active_users)
+            print(f'Shares for team {team}: {shares}')
+
+            # Assign shares to users.
+            for i, user in enumerate(users):
+                user_shares[user] = shares[i]
+                print(f'Assigned share to user {user}: {shares[i]}')
 
 # -------------------------------------------------------------------------------------------------- #
-# List of active users.
-active_users = []
+# List of active users by team.
+active_users_by_team = {}
 
 # Global dictionary to store user shares.
 user_shares = {}
@@ -259,12 +273,21 @@ def login():
             flash('Login successful.', 'success')
 
             # Add the user to the list of active users.
-            if username not in active_users:
-                active_users.append(username)
-            print(f'Active users: {active_users}')
+            team = user[4]
+            if team not in active_users_by_team:
+                active_users_by_team[team] = []
+            if username not in active_users_by_team[team]:
+                active_users_by_team[team].append(username)
+            print(f'Active users by team: {active_users_by_team}')
 
-            # Genearte shares for the master key.
-            if len(active_users) >= 2:
+            # Generate shares for the master key if it doesn't exist.
+            if team not in master_keys_by_team:
+                master_key = generate_secret_key()
+                master_keys_by_team[team] = master_key
+                assign_master_key_shares_in_memory(master_key)
+                print(f'Master key for team {team}: {master_key}')
+            else:
+                master_key = master_keys_by_team[team]
                 assign_master_key_shares_in_memory(master_key)
                 print(f'User shares: {user_shares}')
 
@@ -279,11 +302,13 @@ def logout():
     # Get the username from the session.
     username = session['username']
 
-    # Remove the user from the list of active users.
-    if session['username'] in active_users:
-        active_users.remove(session['username'])
+    # Remove the user from the list of active users by team.
+    user = db_config.get_user_from_db(username)
+    team = user[4]
+    if team in active_users_by_team and username in active_users_by_team[team]:
+        active_users_by_team[team].remove(username)
     session.pop('username', None)
-    print(f'Active users: {active_users}')
+    print(f'Active users by team: {active_users_by_team}')
 
     flash('Logged out.')
     return redirect(url_for('login'))
@@ -296,7 +321,7 @@ def index():
     username = session['username']
     user = db_config.get_user_from_db(username)
     team = user[4]
-    print(f'User: {user}, Team: {team}')
+    
     # Directory for the team's files.
     team_folder = os.path.join(app.config['UPLOAD_FOLDER'], team)
     if not os.path.exists(team_folder):
@@ -314,11 +339,11 @@ def upload_file():
     
     file = request.files['file']
     private_key = request.files['private_key']
+
     if file.filename == '' or private_key.filename == '':
         return redirect(url_for('index'))
     
     if file:
-        # Get the username.
         username = session.get('username')
         if not username:
             flash('User not authenticated.')
@@ -326,7 +351,6 @@ def upload_file():
         
         user = db_config.get_user_from_db(username)
         team = user[4]
-        print(f'User: {user}, Team: {team}')
 
         # Directory for the team's files.
         team_folder = os.path.join(app.config['UPLOAD_FOLDER'], team)
@@ -335,31 +359,27 @@ def upload_file():
 
         # Save the file in the team's directory.
         file_path = os.path.join(team_folder, file.filename)
-        print(f'File saved at: {file_path}')
         file.save(file_path)
 
         # Sign the file.
         signature = sign_file(file_path, private_key)
         # Encode signature in base64.
         signature_b64 = base64.b64encode(signature)
-        print(f'File signature: {signature_b64}')
 
         # IF the file is signed, encrypt the file.
         if signature:
             # Encrypt the file with AES mode CTR.
             encrypted_file_path, key_b64 = encrypt_file_CTR(file_path)
-            print(f'Encrypted file path: {encrypted_file_path}')
-            print(f'Key (base64): {key_b64}')
 
             with open(encrypted_file_path, 'rb') as f:
                 encrypted_file_data_b64 = f.read()
-            #print(f'Encrypted file data (base64): {encrypted_file_data_b64}')
             
             # Concatenate encrypt file with signature.
             concatenated_file = encrypted_file_data_b64 + signature_b64
-            #print(f'Concatenated file: {concatenated_file}')
+            
             # Filename with .sig extension.
             filename_sig = f'{file.filename}.sig'
+
             # Save the concatenated file.
             concatenated_file_path = os.path.join(team_folder, filename_sig)
             with open(concatenated_file_path, 'wb') as f:
@@ -368,8 +388,9 @@ def upload_file():
         # Remove the encrypted file.
         os.remove(encrypted_file_path)
         
+        # Get only the username.
         user = user[1]
-        print(f'User: {user}')
+
         # Save the files in the database.
         db_config.save_files_in_db(user, filename_sig, signature_b64, key_b64)
         
@@ -381,13 +402,22 @@ def upload_file():
 def download_file(filename):
     print(f'File selected for download: {filename}')
     
-    # Verify if all users are active to download the file.
-    if len(active_users) != len(user_shares):
-        flash('All users must be logged in to download the file.')
-        print('All users must be logged in to download the file.')
+    username = session['username']
+    if not username:
+        flash('User not authenticated.')
+        return redirect(url_for('login'))
+    
+    user = db_config.get_user_from_db(username)
+    team = user[4]
+
+    if team not in active_users_by_team or len(active_users_by_team[team]) != len(user_shares):
+        flash('All team members must be logged in to download the file.')
+        print('All team members must be logged in to download the file.')
         return redirect(url_for('index'))
+    
     # Reconstruct the master key.
-    shares = [user_shares[username] for username in active_users]
+    shares = [user_shares[username] for username in active_users_by_team[team]]
+    print(f'Shares reconstructed for team {team}: {shares}')
     master_key = reconstruct_secret_key(shares)
     print(f'Master key reconstructed: {master_key}')
 
@@ -396,13 +426,13 @@ def download_file(filename):
     print(f'File record: {file_record}')
     
     # Get the signature from the file record.
-    signature_b64 = file_record[3]  # Assuming the signature is in the third column.
+    signature_b64 = file_record[3]
     # Convert signature_b64 to bytes.
     signature_b64 = signature_b64.encode()
     print(f'Signature: {signature_b64}')
     
     # Get the path of the concatenated file.
-    concatenated_file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    concatenated_file_path = os.path.join(app.config['UPLOAD_FOLDER'], team, filename)
     print(f'Concatenated file path: {concatenated_file_path}')
     
     # Read the concatenated file.
@@ -416,7 +446,7 @@ def download_file(filename):
         encrypted_file_data_b64 = concatenated_file_data_b64[:-len(signature_b64)]
         
         # Get the key from the database.
-        key_b64 = file_record[4]  # Assuming the key is in the fourth column.
+        key_b64 = file_record[4]
         # Convert key_b64 to bytes.
         key_b64 = key_b64.encode()
         print(f'Key (base64): {key_b64}')
@@ -426,12 +456,12 @@ def download_file(filename):
         # Decrypt the file.
         decrypted_file = decrypt_file_CTR(encrypted_file_data_b64, key)
         
-        # Get user_id from the person who signed the file.
-        user_id = file_record[1]
-        print(f'User ID: {user_id}')
+        # Get user from the person who signed the file.
+        user = file_record[1]
+        print(f'User: {user}')
 
         # Verify the signature.
-        public_key_b64 = db_config.get_public_key_from_db(user_id)
+        public_key_b64 = db_config.get_public_key_from_db(user)
         # Convert the public key to bytes.
         public_key_b64 = public_key_b64.encode()
         print(f'Public key (base64): {public_key_b64}')
@@ -464,6 +494,4 @@ def download_file(filename):
 db_config.init_db()
 
 if __name__ == '__main__':
-    master_key = generate_secret_key()
-    print(f'Master key: {master_key}')
     app.run(debug=True)

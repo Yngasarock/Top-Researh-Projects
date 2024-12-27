@@ -5,10 +5,10 @@
 import mysql.connector
 
 # MySQL configuration.
-MYSQL_HOST = ''
-MYSQL_USER = ''
-MYSQL_PASSWORD = ''
-MYSQL_DATABASE = ''
+MYSQL_HOST = 'localhost'
+MYSQL_USER = 'root'
+MYSQL_PASSWORD = 'S3rver01_NGRN'
+MYSQL_DATABASE = 'users'
 
 # Function to get a database connection.
 def get_db_connection():
@@ -47,11 +47,11 @@ def init_db():
     conn.close()
 
 # Function to get the public key from the database.
-def get_public_key_from_db(user_id):
+def get_public_key_from_db(username):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT public_key FROM users WHERE id = %s", (user_id,))
-    #cursor.execute("SELECT public_key FROM users WHERE username = %s", (username,))
+    #cursor.execute("SELECT public_key FROM users WHERE id = %s", (user_id,))
+    cursor.execute("SELECT public_key FROM users WHERE username = %s", (username,))
     public_key = cursor.fetchone()[0]
     conn.close()
     return public_key
