@@ -5,10 +5,10 @@
 import mysql.connector
 
 # MySQL configuration.
-MYSQL_HOST = 'localhost'
-MYSQL_USER = 'root'
-MYSQL_PASSWORD = 'S3rver01_NGRN'
-MYSQL_DATABASE = 'users'
+MYSQL_HOST = ''
+MYSQL_USER = ''
+MYSQL_PASSWORD = ''
+MYSQL_DATABASE = ''
 
 # Function to get a database connection.
 def get_db_connection():
