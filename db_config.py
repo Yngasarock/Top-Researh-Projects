@@ -2,13 +2,13 @@
 
 # config.py
 
-import mysql.connector
+import mysql.connector # type: ignore
 
 # MySQL configuration.
 MYSQL_HOST = ''
 MYSQL_USER = ''
 MYSQL_PASSWORD = ''
-MYSQL_DATABASE = ''
+MYSQL_DATABASE = 'users'
 
 # Function to get a database connection.
 def get_db_connection():

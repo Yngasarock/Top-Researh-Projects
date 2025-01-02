@@ -2,7 +2,7 @@
 # Author: Asael, Josue
 
 # Libraries.
-from flask import Flask, make_response, request, redirect, session, url_for, render_template, send_file, flash
+from flask import Flask, request, redirect, session, url_for, render_template, send_file, flash
 import os, base64, hashlib
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
@@ -202,11 +202,77 @@ def assign_master_key_shares_in_memory(master_key):
                 print(f'Assigned share to user {user}: {shares[i]}')
 
 # -------------------------------------------------------------------------------------------------- #
+# Key wrapping.
+
+# Function to generate a wrapped key.
+def generate_wrapped_key():
+    # Generate a random key.
+    wrapped_key = get_random_bytes(16)
+    # Encode wrapped key in base64.
+    wrapped_key_b64 = base64.b64encode(wrapped_key).decode()
+    return wrapped_key_b64
+
+# Function to wrap a key.
+def wrap_key(filename, key):
+    # Decode the key in base64.
+    key = base64.b64decode(key)
+    print(f'Key: {key}')
+    # Generate a wrapped key.
+    wrapped_key = generate_wrapped_key()
+
+    # Store the wrapped key in json.
+    wrapped_keys_by_file[filename] = wrapped_key
+
+    # Decode the wrapped key in base64.
+    wrapped_key = base64.b64decode(wrapped_key)
+    print(f'Wrapped key: {wrapped_key}')
+    # Generate iv.
+    iv = get_random_bytes(8)
+    # Wrap the key.
+    cipher = AES.new(wrapped_key, AES.MODE_CTR, nonce=iv)
+    wrapped_key = cipher.encrypt(key)
+    # Concatenate iv with wrapped key.
+    wrapped = iv + wrapped_key
+    # Encode the wrapped key in base64.
+    wrapped_key_b64 = base64.b64encode(wrapped).decode()
+    return wrapped_key_b64
+
+# Function to unwrap a key.
+def unwrap_key(filename, wrapped_key_b64):
+    print(f'Wrapped Keys by file: {wrapped_keys_by_file}')
+    # Get the wrapping key from wrapped_keys_by_file.
+    wrapping_key_b64 = wrapped_keys_by_file[filename]
+    print(f'Wrapping key: {wrapping_key_b64}')
+
+    # Decode the wrapping key in base64.
+    wrapping_key = base64.b64decode(wrapping_key_b64)
+
+    # Decode the wrapped key in base64.
+    wrapped_key = base64.b64decode(wrapped_key_b64)
+
+    # Extract the iv from the wrapped key.
+    iv = wrapped_key[:8]
+    wrapped_key = wrapped_key[8:]
+
+    # Decipher the wrapped key.
+    cipher = AES.new(wrapping_key, AES.MODE_CTR, nonce=iv)
+    decrypted_wrapped_key = cipher.decrypt(wrapped_key)
+    print(f'Decrypted wrapped key: {decrypted_wrapped_key}')
+    # Encode the decrypted wrapped key in base64.
+    decrypted_wrapped_key_b64 = base64.b64encode(decrypted_wrapped_key).decode()
+    return decrypted_wrapped_key_b64
+
+
+# -------------------------------------------------------------------------------------------------- #
 # List of active users by team.
 active_users_by_team = {}
 
 # Global dictionary to store user shares.
 user_shares = {}
+
+# JSON to store the wrapped keys by file.
+wrapped_keys_by_file = {}
+
 # -------------------------------------------------------------------------------------------------- #
 
 # Route for registration.
@@ -258,7 +324,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
-
+        
         # Search for the user in the database.
         user = db_config.get_user_from_db(username)
 
@@ -269,7 +335,7 @@ def login():
             error_password = 'Incorrect password.'
         else:
             # If the user exists and the password is correct, set the session and redirect to the index page.
-            session['username'] = user[1]  # Username is in the second column.
+            session['username'] = user[1]
             flash('Login successful.', 'success')
 
             # Add the user to the list of active users.
@@ -370,6 +436,7 @@ def upload_file():
         if signature:
             # Encrypt the file with AES mode CTR.
             encrypted_file_path, key_b64 = encrypt_file_CTR(file_path)
+            print('Key in base64:', key_b64)
 
             with open(encrypted_file_path, 'rb') as f:
                 encrypted_file_data_b64 = f.read()
@@ -391,8 +458,12 @@ def upload_file():
         # Get only the username.
         user = user[1]
 
+        # Wrap the key.
+        wrapped_key = wrap_key(filename_sig, key_b64)
+        print(f'Wrapped keys: {wrapped_keys_by_file}')
+
         # Save the files in the database.
-        db_config.save_files_in_db(user, filename_sig, signature_b64, key_b64)
+        db_config.save_files_in_db(user, filename_sig, signature_b64, wrapped_key)
         
         flash(f'File {file.filename} uploaded, signed and encrypted successfully')
         return redirect(url_for('index'))
@@ -446,11 +517,15 @@ def download_file(filename):
         encrypted_file_data_b64 = concatenated_file_data_b64[:-len(signature_b64)]
         
         # Get the key from the database.
-        key_b64 = file_record[4]
+        wrapped_key_b64 = file_record[4]
         # Convert key_b64 to bytes.
-        key_b64 = key_b64.encode()
-        print(f'Key (base64): {key_b64}')
-        # Decode the key in base64.
+        wrapped_key_b64 = wrapped_key_b64.encode()
+        print(f'Wrapped Key (base64): {wrapped_key_b64}')
+        ##############
+        # Unwrap the key.
+        key_b64 = unwrap_key(filename, wrapped_key_b64)
+
+        # Decode key in base64.
         key = base64.b64decode(key_b64)
         
         # Decrypt the file.
