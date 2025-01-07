@@ -5,33 +5,220 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"> <!-- Asegurar que los íconos se carguen -->
+    <style>
+        .progress {
+            height: 8px; /* Hacer la barra de progreso más delgada */
+            transition: width 0.3s ease-in-out; /* Animación de la barra de progreso */
+        }
+
+        #password-strength-container {
+            display: none; /* Ocultar inicialmente el contenedor de barra de progreso */
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out; /* Animación para la aparición del contenedor */
+        }
+
+        #password-requirements {
+            display: none; /* Mostrar el mensaje de requisitos solo cuando el usuario comience a escribir */
+            font-size: 0.9em;
+            color: #e74c3c;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out; /* Animación para la aparición de los requisitos */
+        }
+
+        #password-requirements ul li {
+            opacity: 0; /* Oculto inicialmente */
+            transform: translateY(-10px); /* Mover hacia arriba */
+            transition: opacity 0.3s ease, transform 0.3s ease; /* Transición suave */
+        }
+
+        #password-requirements ul li.valid {
+            opacity: 1; /* Mostrar cuando sea válido */
+            transform: translateY(0); /* Vuelve a su posición original */
+        }
+
+        #password-requirements ul li.invalid {
+            opacity: 0.5; /* Semitransparente para no válido */
+        }
+
+        .show-password-btn {
+            cursor: pointer;
+            transition: transform 0.3s ease; /* Animación de transición para el botón */
+        }
+
+        .show-password-btn:hover {
+            transform: scale(1.1); /* Agrandar el ícono al pasar el mouse */
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9); /* Escalar un poco hacia abajo */
+            }
+            to {
+                opacity: 1;
+                transform: scale(1); /* Escalar a su tamaño original */
+            }
+        }
+
+        .card {
+            animation: fadeIn 0.5s ease-in-out; /* Aplicar la animación al contenedor */
+        }
+
+        select {
+            transition: background-color 0.3s ease, transform 0.3s ease; /* Agregar una transición al hover o focus */
+        }
+
+        select:focus {
+            background-color: #f0f8ff; /* Cambiar el fondo al enfocar */
+            transform: scale(1.05); /* Hacer que el select se agrande un poco */
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h2 class="mt-5">Register</h2>
-        <form method="POST" action="/register" onsubmit="setTimeout(function(){ window.location.href='/login'; }, 1000);">
-            <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" class="form-control" id="username" name="username" required>
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-            <div class="mb-3">
-                <label for="team" class="form-label">Team</label>
-                <select class="form-select" id="team" name="team" required>
-                    <option value="" disabled selected>-- Select an option --</option>
-                    <option value="chemistry">Chemistry</option>
-                    <option value="physics">Physics</option>
-                    <option value="biology">Biology</option>
-                    <option value="medicine">Medicine</option>
-                    <option value="cryptography">Cryptography</option>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Register</button>
-        </form>
-        <p class="mt-3">Already have an account? <a href="/login">Login here</a></p>
+    <div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="card p-4" style="width: 100%; max-width: 500px;">
+            <h2 class="mt-3 text-center">Register</h2>
+            <form method="POST" action="/register" onsubmit="setTimeout(function(){ window.location.href='/login'; }, 1000);">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="password" name="password" required>
+                        <span class="input-group-text show-password-btn" id="toggle-password">
+                            <i class="bi bi-eye"></i> <!-- Ícono para mostrar contraseña -->
+                        </span>
+                    </div>
+                    <div id="password-requirements" class="mt-2">
+                        <ul>
+                            <li id="uppercase-requirement">At least one uppercase letter</li>
+                            <li id="specialchar-requirement">At least one special character</li>
+                            <li id="number-requirement">At least one number</li>
+                        </ul>
+                    </div>
+                    <div id="password-strength-container" class="mt-2">
+                        <span id="password-strength-text" class="ms-2">Weak</span> <!-- Texto de nivel de seguridad arriba -->
+                        <div class="progress w-75 mt-1">
+                            <div id="password-strength-bar" class="progress-bar" role="progressbar" style="width: 0;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="team" class="form-label">Team</label>
+                    <select class="form-select" id="team" name="team" required>
+                        <option value="" disabled selected>-- Select an option --</option>
+                        <option value="chemistry">Chemistry</option>
+                        <option value="physics">Physics</option>
+                        <option value="biology">Biology</option>
+                        <option value="medicine">Medicine</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Register</button>
+            </form>
+            <p class="mt-3 text-center">Already have an account? <a href="/login">Login here</a></p>
+        </div>
     </div>
+    <script>
+        const passwordInput = document.getElementById('password');
+        const passwordStrengthBar = document.getElementById('password-strength-bar');
+        const passwordStrengthText = document.getElementById('password-strength-text');
+        const passwordStrengthContainer = document.getElementById('password-strength-container');
+        const passwordRequirements = document.getElementById('password-requirements');
+        const uppercaseRequirement = document.getElementById('uppercase-requirement');
+        const specialcharRequirement = document.getElementById('specialchar-requirement');
+        const numberRequirement = document.getElementById('number-requirement');
+        const togglePasswordBtn = document.getElementById('toggle-password');
+    
+        const updateRequirement = (element, isValid) => {
+            if (isValid) {
+                element.classList.add('valid');
+                element.classList.remove('invalid');
+            } else {
+                element.classList.add('invalid');
+                element.classList.remove('valid');
+            }
+        };
+
+        passwordInput.addEventListener('input', () => {
+            const password = passwordInput.value;
+            let strength = 0;
+            let color = '';
+            let strengthText = '';
+
+            const hasUpperCase = /[A-Z]/.test(password); // Validar al menos una mayúscula
+            const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>_]/.test(password); // Validar al menos un carácter especial, incluyendo "_"
+            const hasNumber = /[0-9]/.test(password); // Validar al menos un número
+
+            if (password.length > 0) {  // Mostrar la barra y requisitos solo después de que el usuario comience a escribir
+                passwordStrengthContainer.style.display = 'block';
+                passwordStrengthContainer.style.opacity = 1; // Hacer aparecer el contenedor con animación
+                passwordRequirements.style.display = 'block';
+                passwordRequirements.style.opacity = 1; // Hacer aparecer los requisitos con animación
+            }
+
+            // Actualizar requisitos con animación
+            updateRequirement(uppercaseRequirement, hasUpperCase);
+            updateRequirement(specialcharRequirement, hasSpecialChar);
+            updateRequirement(numberRequirement, hasNumber);
+
+            // Mostrar el estado de los requisitos de la contraseña
+            if (hasUpperCase) {
+                uppercaseRequirement.style.color = '#2ecc71';  // Verde
+            } else {
+                uppercaseRequirement.style.color = '#e74c3c';  // Rojo
+            }
+
+            if (hasSpecialChar) {
+                specialcharRequirement.style.color = '#2ecc71';  // Verde
+            } else {
+                specialcharRequirement.style.color = '#e74c3c';  // Rojo
+            }
+
+            if (hasNumber) {
+                numberRequirement.style.color = '#2ecc71';  // Verde
+            } else {
+                numberRequirement.style.color = '#e74c3c';  // Rojo
+            }
+
+            if (password.length < 6 || !hasUpperCase || !hasSpecialChar || !hasNumber) {
+                strength = 20;
+                color = '#e74c3c';  // Stronger red
+                strengthText = 'Weak';
+            } else if (password.length < 10) {
+                strength = 50;
+                color = '#f39c12';  // Stronger yellow
+                strengthText = 'Medium';
+            } else {
+                strength = 100;
+                color = '#2ecc71';  // Lighter green
+                strengthText = 'Strong';
+            }
+
+            passwordStrengthBar.style.width = `${strength}%`;
+            passwordStrengthBar.setAttribute('aria-valuenow', strength);
+            passwordStrengthBar.style.backgroundColor = color;
+            passwordStrengthText.textContent = strengthText;
+            passwordStrengthText.style.color = color;
+        });
+
+        // Función para mostrar u ocultar la contraseña cuando se mantenga presionado el botón
+        togglePasswordBtn.addEventListener('mousedown', () => {
+            passwordInput.type = 'text';
+            togglePasswordBtn.innerHTML = '<i class="bi bi-eye-slash"></i>'; // Cambiar ícono a "ojo tachado"
+        });
+
+        togglePasswordBtn.addEventListener('mouseup', () => {
+            passwordInput.type = 'password';
+            togglePasswordBtn.innerHTML = '<i class="bi bi-eye"></i>'; // Cambiar ícono a "ojo"
+        });
+
+        togglePasswordBtn.addEventListener('mouseleave', () => {
+            passwordInput.type = 'password';
+            togglePasswordBtn.innerHTML = '<i class="bi bi-eye"></i>'; // Cambiar ícono a "ojo" si el mouse sale del botón
+        });
+    </script>
 </body>
 </html>

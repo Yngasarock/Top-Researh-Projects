@@ -25,11 +25,27 @@
             border: none;
             border-radius: 5px;
             padding: 10px 20px;
+            width: auto;  /* Ajusta el ancho al contenido del botón */
+            max-width: 250px;  /* Limita el ancho máximo */
         }
         .upload-card {
             background-color: #f8f9fa;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        /* Centrado de los botones */
+        .form-group {
+            text-align: center;
+        }
+        /* Centrado del título */
+        h1 {
+            text-align: center;
+        }
+        /* Centrado del botón "Upload File" */
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -55,7 +71,10 @@
                         <button type="button" class="custom-file-button animate__animated animate__fadeIn" onclick="document.getElementById('private-key-upload').click()">Select Private Key File</button>
                         <input type="file" id="private-key-upload" name="private_key" class="custom-file-input" required onchange="document.querySelectorAll('.custom-file-button')[1].textContent = this.files[0].name">
                     </div>
-                    <button type="submit" class="btn btn-upload btn-lg animate__animated animate__fadeInUp">Upload File</button>
+                    <!-- Contenedor para centrar el botón "Upload File" -->
+                    <div class="btn-container">
+                        <button type="submit" class="btn btn-upload btn-lg animate__animated animate__fadeInUp">Upload File</button>
+                    </div>
                 </form>
             </div>
             <div class="uploaded-files mt-5">

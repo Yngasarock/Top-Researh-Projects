@@ -50,7 +50,6 @@ def init_db():
 def get_public_key_from_db(username):
     conn = get_db_connection()
     cursor = conn.cursor()
-    #cursor.execute("SELECT public_key FROM users WHERE id = %s", (user_id,))
     cursor.execute("SELECT public_key FROM users WHERE username = %s", (username,))
     public_key = cursor.fetchone()[0]
     conn.close()

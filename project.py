@@ -11,7 +11,6 @@ from Crypto.Signature import DSS
 from Crypto.Hash import SHA256
 from Crypto.Protocol.SecretSharing import Shamir
 from io import BytesIO
-import secrets
 import db_config # DB configuration.
 
 
@@ -332,7 +331,7 @@ def login():
         if user is None:
             error_username = 'User does not exist.'
         elif user[2] != hashed_password:  # Assuming the password is in the third column.
-            error_password = 'Incorrect password.'
+            error_password = 'Incorrect password. Try again.'
         else:
             # If the user exists and the password is correct, set the session and redirect to the index page.
             session['username'] = user[1]
