@@ -192,7 +192,7 @@ def assign_master_key_shares_in_memory(master_key):
             print(f'Master key for team {team}: {master_key}')
 
             # Generate shares for the master key.
-            shares = split_secret_key(master_key, num_active_users, num_active_users)
+            shares = split_secret_key(master_key, num_active_users, num_active_users - 1)
             print(f'Shares for team {team}: {shares}')
 
             # Assign shares to users.
@@ -480,7 +480,7 @@ def download_file(filename):
     user = db_config.get_user_from_db(username)
     team = user[4]
 
-    if team not in active_users_by_team or len(active_users_by_team[team]) != len(user_shares):
+    if team not in active_users_by_team or len(active_users_by_team[team]) < len(user_shares) - 1:
         flash('All team members must be logged in to download the file.')
         print('All team members must be logged in to download the file.')
         return redirect(url_for('index'))
@@ -520,7 +520,7 @@ def download_file(filename):
         # Convert key_b64 to bytes.
         wrapped_key_b64 = wrapped_key_b64.encode()
         print(f'Wrapped Key (base64): {wrapped_key_b64}')
-        ##############
+        
         # Unwrap the key.
         key_b64 = unwrap_key(filename, wrapped_key_b64)
 

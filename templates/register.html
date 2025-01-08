@@ -89,7 +89,7 @@
                     <div class="input-group">
                         <input type="password" class="form-control" id="password" name="password" required>
                         <span class="input-group-text show-password-btn" id="toggle-password">
-                            <i class="bi bi-eye"></i> <!-- Ícono para mostrar contraseña -->
+                            <i class="bi bi-eye-slash"></i> <!-- Ícono para mostrar contraseña -->
                         </span>
                     </div>
                     <div id="password-requirements" class="mt-2">
@@ -114,6 +114,7 @@
                         <option value="physics">Physics</option>
                         <option value="biology">Biology</option>
                         <option value="medicine">Medicine</option>
+                        <option value="cryptography">Cryptography</option>
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Register</button>
@@ -149,7 +150,7 @@
             let strengthText = '';
 
             const hasUpperCase = /[A-Z]/.test(password); // Validar al menos una mayúscula
-            const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>_]/.test(password); // Validar al menos un carácter especial, incluyendo "_"
+            const hasSpecialChar = /[&,.?_]/.test(password); // Validar al menos un carácter especial, incluyendo "_"
             const hasNumber = /[0-9]/.test(password); // Validar al menos un número
 
             if (password.length > 0) {  // Mostrar la barra y requisitos solo después de que el usuario comience a escribir
@@ -207,17 +208,17 @@
         // Función para mostrar u ocultar la contraseña cuando se mantenga presionado el botón
         togglePasswordBtn.addEventListener('mousedown', () => {
             passwordInput.type = 'text';
-            togglePasswordBtn.innerHTML = '<i class="bi bi-eye-slash"></i>'; // Cambiar ícono a "ojo tachado"
+            togglePasswordBtn.innerHTML = '<i class="bi bi-eye"></i>'; // Cambiar ícono a "ojo"
         });
 
         togglePasswordBtn.addEventListener('mouseup', () => {
             passwordInput.type = 'password';
-            togglePasswordBtn.innerHTML = '<i class="bi bi-eye"></i>'; // Cambiar ícono a "ojo"
+            togglePasswordBtn.innerHTML = '<i class="bi bi-eye-slash"></i>'; // Cambiar ícono a "ojo tachado"
         });
 
         togglePasswordBtn.addEventListener('mouseleave', () => {
             passwordInput.type = 'password';
-            togglePasswordBtn.innerHTML = '<i class="bi bi-eye"></i>'; // Cambiar ícono a "ojo" si el mouse sale del botón
+            togglePasswordBtn.innerHTML = '<i class="bi bi-eye-slash"></i>'; // Cambiar ícono a "ojo tachado" si el mouse sale del botón
         });
     </script>
 </body>

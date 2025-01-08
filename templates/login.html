@@ -67,7 +67,7 @@
                     <div class="input-group">
                         <input type="password" class="form-control {% if error_password %}is-invalid{% endif %}" id="password" name="password" required>
                         <span class="input-group-text show-password-btn" id="toggle-password">
-                            <i class="bi bi-eye"></i> <!-- Ícono para mostrar contraseña -->
+                            <i class="bi bi-eye-slash"></i> <!-- Ícono para mostrar contraseña -->
                         </span>
                     </div>
                     {% if error_password %}
@@ -83,18 +83,21 @@
 
     <script>
         const passwordInput = document.getElementById('password');
-        const togglePassword = document.getElementById('toggle-password');
+        const togglePasswordBtn = document.getElementById('toggle-password');
         
-        togglePassword.addEventListener('mousedown', () => {
+        togglePasswordBtn.addEventListener('mousedown', () => {
             passwordInput.type = 'text';
+            togglePasswordBtn.innerHTML = '<i class="bi bi-eye"></i>'; // Cambiar ícono a "ojo"
         });
 
-        togglePassword.addEventListener('mouseup', () => {
+        togglePasswordBtn.addEventListener('mouseup', () => {
             passwordInput.type = 'password';
+            togglePasswordBtn.innerHTML = '<i class="bi bi-eye-slash"></i>'; // Cambiar ícono a "ojo tachado"
         });
 
-        togglePassword.addEventListener('mouseleave', () => {
+        togglePasswordBtn.addEventListener('mouseleave', () => {
             passwordInput.type = 'password';
+            togglePasswordBtn.innerHTML = '<i class="bi bi-eye-slash"></i>'; // Cambiar ícono a "ojo tachado" si el mouse sale del botón
         });
     </script>
 </body>
