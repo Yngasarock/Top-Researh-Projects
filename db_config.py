@@ -88,11 +88,3 @@ def get_user_from_db(username):
     user = cursor.fetchone()
     conn.close()
     return user
-
-# Function to update a password in the database.
-def update_password_in_db(username, password):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE users SET password = %s WHERE username = %s", (password, username))
-    conn.commit()
-    conn.close()
