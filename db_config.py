@@ -5,9 +5,9 @@
 import mysql.connector # type: ignore
 
 # MySQL configuration.
-MYSQL_HOST = 'localhost'
-MYSQL_USER = 'root'
-MYSQL_PASSWORD = 'S3rver01_NGRN'
+MYSQL_HOST = ''
+MYSQL_USER = ''
+MYSQL_PASSWORD = ''
 MYSQL_DATABASE = 'users'
 
 # Function to get a database connection.
