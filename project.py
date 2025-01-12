@@ -3,7 +3,7 @@
 
 # Libraries.
 from flask import Flask, request, redirect, session, url_for, render_template, send_file, flash
-import os, base64, hashlib
+import os, base64, hashlib, json
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.PublicKey import ECC
@@ -221,7 +221,9 @@ def wrap_key(filename, key):
 
     # Store the wrapped key in json.
     wrapped_keys_by_file[filename] = wrapped_key
-
+    # Write the wrapped keys to a JSON file.
+    with open('wrapped_keys.json', 'w') as json_file:
+        json.dump(wrapped_keys_by_file, json_file, indent=4)
     # Decode the wrapped key in base64.
     wrapped_key = base64.b64decode(wrapped_key)
     print(f'Wrapped key: {wrapped_key}')
@@ -238,6 +240,10 @@ def wrap_key(filename, key):
 
 # Function to unwrap a key.
 def unwrap_key(filename, wrapped_key_b64):
+    # Load the wrapped keys from the JSON file.
+    with open('wrapped_keys.json', 'r') as json_file:
+        wrapped_keys_by_file = json.load(json_file)
+
     print(f'Wrapped Keys by file: {wrapped_keys_by_file}')
     # Get the wrapping key from wrapped_keys_by_file.
     wrapping_key_b64 = wrapped_keys_by_file[filename]
@@ -481,8 +487,8 @@ def download_file(filename):
     team = user[4]
 
     if team not in active_users_by_team or len(active_users_by_team[team]) < len(user_shares) - 1:
-        flash('All team members must be logged in to download the file.')
-        print('All team members must be logged in to download the file.')
+        flash('All team members except one must be logged in to download the file.')
+        print('All team members except one must be logged in to download the file.')
         return redirect(url_for('index'))
     
     # Reconstruct the master key.
